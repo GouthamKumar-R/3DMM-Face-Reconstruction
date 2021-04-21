@@ -59,10 +59,11 @@ def train(args):
 		print('failed to load %s' % FACE_MODEL_PATH)
 	skinmask = torch.tensor(facemodel['skinmask']).cuda()
     
-    print("Reconmodel Intialisation")
+
 	model = ReconModel(facemodel, img_size=TAR_SIZE)
 	model.train()
 	model.cuda()
+	
 
 	id_tensor = torch.zeros((1, 80), dtype=torch.float32, requires_grad=True, device='cuda')
 	tex_tensor = torch.zeros((1, 80), dtype=torch.float32, requires_grad=True, device='cuda')
