@@ -58,7 +58,8 @@ def train(args):
 	except Exception as e:
 		print('failed to load %s' % FACE_MODEL_PATH)
 	skinmask = torch.tensor(facemodel['skinmask']).cuda()
-
+    
+    print("Reconmodel Intialisation")
 	model = ReconModel(facemodel, img_size=TAR_SIZE)
 	model.train()
 	model.cuda()
