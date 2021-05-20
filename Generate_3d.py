@@ -31,11 +31,11 @@ def train(args):
 	img_output_path = args.outimg
 
 	fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, flip_input=False)
-	print('loading images')
+	print('Loading image')
 	orig_img = cv2.imread(img_path)[:, :, ::-1]
 	h, w = orig_img.shape[:2]
-	print('image is loaded. width: %d, height: %d' % (w, h))
-	print('processing the image')
+	print('Image is loaded. width: %d, height: %d' % (w, h))
+	print('Processing the image')
 	lms = fa.get_landmarks_from_image(orig_img)[0]
 	bbox = [int(lms[:, 0].min()), int(lms[:, 1].min()), 
             int(lms[:, 0].max()), int(lms[:, 1].max())] # left, top, right, bottom
@@ -52,7 +52,7 @@ def train(args):
 	lms = torch.tensor(lms, dtype=torch.float32).cuda()
 	img_tensor = torch.tensor(cropped_img[None, ...], dtype=torch.float32).cuda()
 
-	print('loading facemodel file')
+	print('\nLoading facemodel file')
 	try:
 		facemodel = loadmat(FACE_MODEL_PATH)
 	except Exception as e:
@@ -71,8 +71,8 @@ def train(args):
 	rot_tensor = torch.zeros((1, 3), dtype=torch.float32, requires_grad=True, device='cuda')
 	gamma_tensor = torch.zeros((1, 27), dtype=torch.float32, requires_grad=True, device='cuda')
 	trans_tensor = torch.zeros((1, 3), dtype=torch.float32, requires_grad=True, device='cuda')
-
-	print('start rigid fitting')
+	print('*'*50)
+	print('\nstart rigid fitting')
 	rigid_optimizer = torch.optim.Adam([rot_tensor, trans_tensor], lr=RF_LR)
 	for i in tqdm(range(RF_ITERS)):
 		rigid_optimizer.zero_grad()
@@ -83,7 +83,7 @@ def train(args):
 		lm_loss_val = lm_loss(pred_lms, lms, img_size=TAR_SIZE)
 		lm_loss_val.backward()
 		rigid_optimizer.step()
-	print('start non-rigid fitting')
+	print('\nstart non-rigid fitting')
 	nonrigid_optimizer = torch.optim.Adam([id_tensor, tex_tensor,
 										exp_tensor, rot_tensor,
 										gamma_tensor, trans_tensor], lr=NRF_LR)
@@ -110,7 +110,8 @@ def train(args):
 						tex_tensor, rot_tensor,
 						gamma_tensor, trans_tensor], dim=1)
 		rendered_img, pred_lms, face_texture, mesh = model(coeff)
-		print('saving results')
+		print('*' * 50)
+		print('\nSaving results')
 		rendered_img = rendered_img.cpu().numpy().squeeze()
 		out_img = rendered_img[:, :, :3].astype(np.uint8)
 		out_mask = (rendered_img[:, :, 3]>0).astype(np.uint8)
