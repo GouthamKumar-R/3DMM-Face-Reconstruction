@@ -13,9 +13,6 @@ def photo_loss(pred_img, gt_img, img_mask):
 
 def lm_loss(pred_lms, gt_lms, img_size=224):
     w = torch.ones((1, 68)).to(pred_lms.device)
-    # we set higher weights for landmarks around the mouth and nose regions
-    # landmark_weight = tf.concat([tf.ones([1,28]),20*tf.ones([1,3]),tf.ones([1,29]),20*tf.ones([1,8])],axis = 1)
-    # landmark_weight = tf.tile(landmark_weight,[tf.shape(landmark_p)[0],1])
     w[:, 28:31] = 10
     w[:, 48:68] = 10
     norm_w = w / w.sum()
@@ -31,3 +28,20 @@ def reg_loss(id_coeff, ex_coeff, tex_coeff):
             torch.square(ex_coeff).sum(1).mean() * 0.8
 
     return loss
+
+def reflectance_loss(tex, skin_mask):
+
+    skin_mask = skin_mask.unsqueeze(2)
+    tex_mean = torch.sum(tex*skin_mask, 1, keepdims=True)/torch.sum(skin_mask)
+    loss = torch.sum(torch.square((tex-tex_mean)*skin_mask/255.))/ \
+        (tex.shape[0]*torch.sum(skin_mask))
+
+    return loss
+
+def gamma_loss(gamma):
+
+    gamma = gamma.reshape(-1, 3, 9)
+    gamma_mean = torch.mean(gamma, dim=1, keepdims=True)
+    gamma_loss = torch.mean(torch.square(gamma - gamma_mean))
+
+    return gamma_loss
